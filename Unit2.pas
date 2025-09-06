@@ -10,6 +10,7 @@ uses
 type
   TForm2 = class(TForm)
     EdgeBrowser1: TEdgeBrowser;
+    procedure FormCreate(Sender: TObject);
   private
     { Private êÈåæ }
   public
@@ -22,5 +23,10 @@ var
 implementation
 
 {$R *.dfm}
+
+procedure TForm2.FormCreate(Sender: TObject);
+begin
+  EdgeBrowser1.Navigate(ExpandFileName('index.html'));
+end;
 
 end.

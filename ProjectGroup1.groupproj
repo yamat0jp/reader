@@ -6,7 +6,7 @@
         <Projects Include="epub.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="Project1.dproj">
+        <Projects Include="reader.dproj">
             <Dependencies/>
         </Projects>
     </ItemGroup>
@@ -26,23 +26,23 @@
     <Target Name="epub:Make">
         <MSBuild Projects="epub.dproj" Targets="Make"/>
     </Target>
-    <Target Name="Project1">
-        <MSBuild Projects="Project1.dproj"/>
+    <Target Name="reader">
+        <MSBuild Projects="reader.dproj"/>
     </Target>
-    <Target Name="Project1:Clean">
-        <MSBuild Projects="Project1.dproj" Targets="Clean"/>
+    <Target Name="reader:Clean">
+        <MSBuild Projects="reader.dproj" Targets="Clean"/>
     </Target>
-    <Target Name="Project1:Make">
-        <MSBuild Projects="Project1.dproj" Targets="Make"/>
+    <Target Name="reader:Make">
+        <MSBuild Projects="reader.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="epub;Project1"/>
+        <CallTarget Targets="epub;reader"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="epub:Clean;Project1:Clean"/>
+        <CallTarget Targets="epub:Clean;reader:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="epub:Make;Project1:Make"/>
+        <CallTarget Targets="epub:Make;reader:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>
