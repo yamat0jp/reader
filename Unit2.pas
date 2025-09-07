@@ -27,6 +27,8 @@ type
       ARequestInfo: TIdHTTPRequestInfo; AResponseInfo: TIdHTTPResponseInfo);
     procedure FormDestroy(Sender: TObject);
     procedure Version1Click(Sender: TObject);
+    procedure EdgeBrowser1NewWindowRequested(Sender: TCustomEdgeBrowser;
+      Args: TNewWindowRequestedEventArgs);
   private
     { Private êÈåæ }
   public
@@ -62,6 +64,12 @@ begin
     Result := MimeMap[LowerCase(Ext)]
   else
     Result := 'application/octet-stream';
+end;
+
+procedure TForm2.EdgeBrowser1NewWindowRequested(Sender: TCustomEdgeBrowser;
+  Args: TNewWindowRequestedEventArgs);
+begin
+  Args.ArgsInterface.Set_Handled(1);
 end;
 
 procedure TForm2.File2Click(Sender: TObject);
@@ -117,7 +125,7 @@ end;
 
 procedure TForm2.Version1Click(Sender: TObject);
 begin
-  Showmessage('version 1.0.2');
+  Showmessage('version 1.0.3');
 end;
 
 end.

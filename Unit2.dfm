@@ -24,8 +24,7 @@ object Form2: TForm2
     AllowSingleSignOnUsingOSPrimaryAccount = False
     TargetCompatibleBrowserVersion = '117.0.2045.28'
     UserDataFolder = '%LOCALAPPDATA%\bds.exe.WebView2'
-    ExplicitLeft = 392
-    ExplicitWidth = 232
+    OnNewWindowRequested = EdgeBrowser1NewWindowRequested
   end
   object MainMenu1: TMainMenu
     Left = 272
