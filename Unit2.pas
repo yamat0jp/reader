@@ -119,9 +119,12 @@ begin
 end;
 
 procedure TForm2.List1Click(Sender: TObject);
+var
+  s: string;
 begin
   Form3.Label1.Caption := '';
-  for var name in TDirectory.GetFiles('bibi-bookshelf', '*.epub') do
+  s := ExtractFilePath(Application.ExeName) + 'bibi-bookshelf';
+  for var name in TDirectory.GetFiles(s, '*.epub') do
     Form3.Label1.Caption := Form3.Label1.Caption + #10#13 +
       ExtractFileName(name);
   Form3.ShowModal;
