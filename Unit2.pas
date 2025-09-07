@@ -82,13 +82,11 @@ var
 begin
   if ParamStr(1) <> '' then
   begin
-    s := ExtractFilePath(ParamStr(0)) + 'bibi-bookshelf\' +
-      ExtractFileName(ParamStr(1));
+    s := ExtractFilePath(ParamStr(0)) + 'bibi-bookshelf\temp.epub';
     CopyFile(PChar(ParamStr(1)), PChar(s), false);
     MimeMap := TDictionary<string, string>.Create;
     InitMimeMap;
-    WebBrowser1.Navigate('http://localhost:8080/index.html?book=' +
-      ExtractFileName(ParamStr(1)));
+    WebBrowser1.Navigate('http://localhost:8080/index.html?book=temp.epub');
   end
   else
     File2Click(nil);
@@ -97,6 +95,7 @@ end;
 procedure TForm2.FormDestroy(Sender: TObject);
 begin
   MimeMap.Free;
+  DeleteFile(ExtractFilePath(Application.ExeName) + 'bibi-bookshelf\temp.epub');
 end;
 
 procedure TForm2.IdHTTPServer1CommandGet(AContext: TIdContext;
@@ -137,7 +136,7 @@ end;
 
 procedure TForm2.Version1Click(Sender: TObject);
 begin
-  Showmessage('version 1.0.1');
+  Showmessage('version 1.0.2');
 end;
 
 procedure TForm2.WebBrowser1DownloadBegin(Sender: TObject);
