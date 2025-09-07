@@ -3,16 +3,36 @@ unit Unit2;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+  System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Winapi.WebView2, Winapi.ActiveX,
-  Vcl.Edge;
+  Vcl.Edge, Vcl.Menus, Vcl.AppEvnts, Vcl.OleCtrls, SHDocVw, IdBaseComponent,
+  IdComponent, IdCustomTCPServer, IdCustomHTTPServer, IdHTTPServer, IdContext;
 
 type
   TForm2 = class(TForm)
-    EdgeBrowser1: TEdgeBrowser;
+    MainMenu1: TMainMenu;
+    File1: TMenuItem;
+    File2: TMenuItem;
+    N1: TMenuItem;
+    N2: TMenuItem;
+    WebBrowser1: TWebBrowser;
+    IdHTTPServer1: TIdHTTPServer;
+    Help1: TMenuItem;
+    List1: TMenuItem;
+    Version1: TMenuItem;
+    procedure File2Click(Sender: TObject);
+    procedure N2Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure WebBrowser1DownloadBegin(Sender: TObject);
+    procedure IdHTTPServer1CommandGet(AContext: TIdContext;
+      ARequestInfo: TIdHTTPRequestInfo; AResponseInfo: TIdHTTPResponseInfo);
+    procedure FormDestroy(Sender: TObject);
+    procedure List1Click(Sender: TObject);
+    procedure Version1Click(Sender: TObject);
   private
     { Private êÈåæ }
+    URL: string;
   public
     { Public êÈåæ }
   end;
@@ -24,9 +44,102 @@ implementation
 
 {$R *.dfm}
 
-procedure TForm2.FormCreate(Sender: TObject);
+uses Winapi.ShellAPI, System.Generics.Collections, System.IOUtils, Unit3;
+
+var
+  MimeMap: TDictionary<string, string>;
+
+procedure InitMimeMap;
 begin
-  EdgeBrowser1.Navigate(ExpandFileName('index.html'));
+  MimeMap.Add('.html', 'text/html;charset=utf-8');
+  MimeMap.Add('.css', 'text/css;charset=utf-8');
+  MimeMap.Add('.js', 'application/javascript;charset=utf-8');
+  MimeMap.Add('.epub', 'application/epub+zip');
+  MimeMap.Add('.png', 'image/png');
+  MimeMap.Add('.jpg', 'image/jpeg');
+end;
+
+function GetMimeType(const Ext: string): string;
+begin
+  if MimeMap.ContainsKey(Ext) then
+    Result := MimeMap[LowerCase(Ext)]
+  else
+    Result := 'application/octet-stream';
+end;
+
+procedure TForm2.File2Click(Sender: TObject);
+var
+  URL: string;
+begin
+  URL := Format('file:///%s/index.html', [ExtractFileDir(Application.ExeName)])
+    .Replace('\', '/', [rfReplaceAll]);
+  WebBrowser1.Navigate(URL);
+end;
+
+procedure TForm2.FormCreate(Sender: TObject);
+var
+  s: string;
+begin
+  if ParamStr(1) <> '' then
+  begin
+    s := ExtractFilePath(ParamStr(0)) + 'bibi-bookshelf\' +
+      ExtractFileName(ParamStr(1));
+    CopyFile(PChar(ParamStr(1)), PChar(s), false);
+    MimeMap := TDictionary<string, string>.Create;
+    InitMimeMap;
+    WebBrowser1.Navigate('http://localhost:8080/index.html?book=' +
+      ExtractFileName(ParamStr(1)));
+  end
+  else
+    File2Click(nil);
+end;
+
+procedure TForm2.FormDestroy(Sender: TObject);
+begin
+  MimeMap.Free;
+end;
+
+procedure TForm2.IdHTTPServer1CommandGet(AContext: TIdContext;
+  ARequestInfo: TIdHTTPRequestInfo; AResponseInfo: TIdHTTPResponseInfo);
+var
+  FilePath: string;
+  stream: TFileStream;
+begin
+  FilePath := ExtractFileDir(Application.ExeName) + ARequestInfo.Document;
+  FilePath := FilePath.Replace('\', '/', [rfReplaceAll]);
+  AResponseInfo.ContentType := GetMimeType(ExtractFileExt(FilePath));
+  stream := TFileStream.Create(FilePath, fmOpenRead or fmShareDenyNone);
+  try
+    AResponseInfo.ContentStream := stream;
+    AResponseInfo.FreeContentStream := true;
+  except
+    stream.Free;
+    raise;
+  end;
+end;
+
+procedure TForm2.List1Click(Sender: TObject);
+begin
+  Form3.Label1.Caption := '';
+  for var name in TDirectory.GetFiles('bibi-bookshelf', '*.epub') do
+    Form3.Label1.Caption := Form3.Label1.Caption + #10#13 +
+      ExtractFileName(name);
+  Form3.ShowModal;
+end;
+
+procedure TForm2.N2Click(Sender: TObject);
+begin
+  Close;
+end;
+
+procedure TForm2.Version1Click(Sender: TObject);
+begin
+  Showmessage('version 1.0.1');
+end;
+
+procedure TForm2.WebBrowser1DownloadBegin(Sender: TObject);
+begin
+  File2Click(nil);
 end;
 
 end.

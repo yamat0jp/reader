@@ -106,6 +106,8 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
+        <Debugger_HostApplication>C:\Users\yamat\Documents\GitHub\2025\reader\Win64\Debug\reader.exe</Debugger_HostApplication>
+        <Debugger_RunParams>&quot;C:\Users\yamat\Desktop\taro items\趣味程度のアルゴリズム.epub&quot;</Debugger_RunParams>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -125,6 +127,10 @@
         </DelphiCompile>
         <DCCReference Include="Unit2.pas">
             <Form>Form2</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Unit3.pas">
+            <Form>Form3</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <BuildConfiguration Include="Base">
