@@ -16,23 +16,19 @@ type
     File2: TMenuItem;
     N1: TMenuItem;
     N2: TMenuItem;
-    WebBrowser1: TWebBrowser;
     IdHTTPServer1: TIdHTTPServer;
     Help1: TMenuItem;
-    List1: TMenuItem;
     Version1: TMenuItem;
+    EdgeBrowser1: TEdgeBrowser;
     procedure File2Click(Sender: TObject);
     procedure N2Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure WebBrowser1DownloadBegin(Sender: TObject);
     procedure IdHTTPServer1CommandGet(AContext: TIdContext;
       ARequestInfo: TIdHTTPRequestInfo; AResponseInfo: TIdHTTPResponseInfo);
     procedure FormDestroy(Sender: TObject);
-    procedure List1Click(Sender: TObject);
     procedure Version1Click(Sender: TObject);
   private
     { Private êÈåæ }
-    URL: string;
   public
     { Public êÈåæ }
   end;
@@ -44,7 +40,8 @@ implementation
 
 {$R *.dfm}
 
-uses Winapi.ShellAPI, System.Generics.Collections, System.IOUtils, Unit3;
+uses Winapi.ShellAPI, System.Generics.Collections, System.IOUtils,
+  System.AnsiStrings;
 
 var
   MimeMap: TDictionary<string, string>;
@@ -68,25 +65,21 @@ begin
 end;
 
 procedure TForm2.File2Click(Sender: TObject);
-var
-  URL: string;
 begin
-  URL := Format('file:///%s/index.html', [ExtractFileDir(Application.ExeName)])
-    .Replace('\', '/', [rfReplaceAll]);
-  WebBrowser1.Navigate(URL);
+  EdgeBrowser1.Navigate('http://localhost:8080/index.html');
 end;
 
 procedure TForm2.FormCreate(Sender: TObject);
 var
   s: string;
 begin
+  MimeMap := TDictionary<string, string>.Create;
+  InitMimeMap;
   if ParamStr(1) <> '' then
   begin
     s := ExtractFilePath(ParamStr(0)) + 'bibi-bookshelf\temp.epub';
     CopyFile(PChar(ParamStr(1)), PChar(s), false);
-    MimeMap := TDictionary<string, string>.Create;
-    InitMimeMap;
-    WebBrowser1.Navigate('http://localhost:8080/index.html?book=temp.epub');
+    EdgeBrowser1.Navigate('http://localhost:8080/index.html?book=temp.epub');
   end
   else
     File2Click(nil);
@@ -117,18 +110,6 @@ begin
   end;
 end;
 
-procedure TForm2.List1Click(Sender: TObject);
-var
-  s: string;
-begin
-  Form3.Label1.Caption := '';
-  s := ExtractFilePath(Application.ExeName) + 'bibi-bookshelf';
-  for var name in TDirectory.GetFiles(s, '*.epub') do
-    Form3.Label1.Caption := Form3.Label1.Caption + #10#13 +
-      ExtractFileName(name);
-  Form3.ShowModal;
-end;
-
 procedure TForm2.N2Click(Sender: TObject);
 begin
   Close;
@@ -137,11 +118,6 @@ end;
 procedure TForm2.Version1Click(Sender: TObject);
 begin
   Showmessage('version 1.0.2');
-end;
-
-procedure TForm2.WebBrowser1DownloadBegin(Sender: TObject);
-begin
-  File2Click(nil);
 end;
 
 end.
