@@ -31,6 +31,7 @@ type
       Args: TNewWindowRequestedEventArgs);
   private
     { Private êÈåæ }
+    url: string;
   public
     { Public êÈåæ }
   end;
@@ -56,6 +57,8 @@ begin
   MimeMap.Add('.epub', 'application/epub+zip');
   MimeMap.Add('.png', 'image/png');
   MimeMap.Add('.jpg', 'image/jpeg');
+  MimeMap.Add('.jpeg', 'image/jpeg');
+  MimeMap.Add('.ico', 'image/x-icon');
 end;
 
 function GetMimeType(const Ext: string): string;
@@ -74,20 +77,21 @@ end;
 
 procedure TForm2.File2Click(Sender: TObject);
 begin
-  EdgeBrowser1.Navigate('http://localhost:8080/index.html');
+  EdgeBrowser1.Navigate(url);
 end;
 
 procedure TForm2.FormCreate(Sender: TObject);
 var
   s: string;
 begin
+  url := Format('http://localhost:%d/index.html', [IdHTTPServer1.DefaultPort]);
   MimeMap := TDictionary<string, string>.Create;
   InitMimeMap;
   if ParamStr(1) <> '' then
   begin
     s := ExtractFilePath(ParamStr(0)) + 'bibi-bookshelf\temp.epub';
     CopyFile(PChar(ParamStr(1)), PChar(s), false);
-    EdgeBrowser1.Navigate('http://localhost:8080/index.html?book=temp.epub');
+    EdgeBrowser1.Navigate(url + '?book=temp.epub');
   end
   else
     File2Click(nil);
@@ -125,7 +129,7 @@ end;
 
 procedure TForm2.Version1Click(Sender: TObject);
 begin
-  Showmessage('version 1.0.3');
+  Showmessage('version 1.0.4');
 end;
 
 end.

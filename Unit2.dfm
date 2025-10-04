@@ -1,6 +1,6 @@
 object Form2: TForm2
-  Left = 0
-  Top = 0
+  Left = 817
+  Top = 443
   Caption = 'epub reader'
   ClientHeight = 441
   ClientWidth = 624
@@ -11,6 +11,7 @@ object Form2: TForm2
   Font.Name = 'Segoe UI'
   Font.Style = []
   Menu = MainMenu1
+  Position = poDesigned
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   TextHeight = 15
@@ -54,7 +55,7 @@ object Form2: TForm2
   object IdHTTPServer1: TIdHTTPServer
     Active = True
     Bindings = <>
-    DefaultPort = 8080
+    DefaultPort = 8765
     OnCommandGet = IdHTTPServer1CommandGet
     Left = 368
     Top = 128
