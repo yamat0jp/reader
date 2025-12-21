@@ -7,7 +7,8 @@ uses
   System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Winapi.WebView2, Winapi.ActiveX,
   Vcl.Edge, Vcl.Menus, Vcl.AppEvnts, Vcl.OleCtrls, SHDocVw, IdBaseComponent,
-  IdComponent, IdCustomTCPServer, IdCustomHTTPServer, IdHTTPServer, IdContext;
+  IdComponent, IdCustomTCPServer, IdCustomHTTPServer, IdHTTPServer, IdContext,
+  Vcl.DdeMan, Vcl.ExtCtrls;
 
 type
   TForm2 = class(TForm)
@@ -16,19 +17,24 @@ type
     File2: TMenuItem;
     N1: TMenuItem;
     N2: TMenuItem;
-    IdHTTPServer1: TIdHTTPServer;
     Help1: TMenuItem;
     Version1: TMenuItem;
     EdgeBrowser1: TEdgeBrowser;
+    open1: TMenuItem;
+    FileOpenDialog1: TFileOpenDialog;
+    DdeClientConv1: TDdeClientConv;
+    Panel1: TPanel;
+    DdeClientItem1: TDdeClientItem;
     procedure File2Click(Sender: TObject);
     procedure N2Click(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
-    procedure IdHTTPServer1CommandGet(AContext: TIdContext;
-      ARequestInfo: TIdHTTPRequestInfo; AResponseInfo: TIdHTTPResponseInfo);
     procedure FormDestroy(Sender: TObject);
     procedure Version1Click(Sender: TObject);
     procedure EdgeBrowser1NewWindowRequested(Sender: TCustomEdgeBrowser;
       Args: TNewWindowRequestedEventArgs);
+    procedure open1Click(Sender: TObject);
+    procedure DdeClientConv1Open(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure DdeClientItem1Change(Sender: TObject);
   private
     { Private êÈåæ }
     url: string;
@@ -46,47 +52,11 @@ implementation
 uses Winapi.ShellAPI, System.Generics.Collections, System.IOUtils,
   System.AnsiStrings;
 
-var
-  MimeMap: TDictionary<string, string>;
-
-procedure InitMimeMap;
-begin
-  MimeMap.Add('.html', 'text/html;charset=utf-8');
-  MimeMap.Add('.css', 'text/css;charset=utf-8');
-  MimeMap.Add('.js', 'application/javascript;charset=utf-8');
-  MimeMap.Add('.epub', 'application/epub+zip');
-  MimeMap.Add('.png', 'image/png');
-  MimeMap.Add('.jpg', 'image/jpeg');
-  MimeMap.Add('.jpeg', 'image/jpeg');
-  MimeMap.Add('.ico', 'image/x-icon');
-end;
-
-function GetMimeType(const Ext: string): string;
-begin
-  if MimeMap.ContainsKey(Ext) then
-    Result := MimeMap[LowerCase(Ext)]
-  else
-    Result := 'application/octet-stream';
-end;
-
-procedure TForm2.EdgeBrowser1NewWindowRequested(Sender: TCustomEdgeBrowser;
-  Args: TNewWindowRequestedEventArgs);
-begin
-  Args.ArgsInterface.Set_Handled(1);
-end;
-
-procedure TForm2.File2Click(Sender: TObject);
-begin
-  EdgeBrowser1.Navigate(url);
-end;
-
-procedure TForm2.FormCreate(Sender: TObject);
+procedure TForm2.DdeClientConv1Open(Sender: TObject);
 var
   s: string;
 begin
-  url := Format('http://localhost:%d/index.html', [IdHTTPServer1.DefaultPort]);
-  MimeMap := TDictionary<string, string>.Create;
-  InitMimeMap;
+  Panel1.Hide;
   if ParamStr(1) <> '' then
   begin
     s := ExtractFilePath(ParamStr(0)) + 'bibi-bookshelf\temp.epub';
@@ -97,29 +67,43 @@ begin
     File2Click(nil);
 end;
 
-procedure TForm2.FormDestroy(Sender: TObject);
+procedure TForm2.DdeClientItem1Change(Sender: TObject);
 begin
-  MimeMap.Free;
-  DeleteFile(ExtractFilePath(Application.ExeName) + 'bibi-bookshelf\temp.epub');
+  caption := DdeClientItem1.Text
 end;
 
-procedure TForm2.IdHTTPServer1CommandGet(AContext: TIdContext;
-  ARequestInfo: TIdHTTPRequestInfo; AResponseInfo: TIdHTTPResponseInfo);
-var
-  FilePath: string;
-  stream: TFileStream;
+procedure TForm2.EdgeBrowser1NewWindowRequested(Sender: TCustomEdgeBrowser;
+  Args: TNewWindowRequestedEventArgs);
 begin
-  FilePath := ExtractFileDir(Application.ExeName) + ARequestInfo.Document;
-  FilePath := FilePath.Replace('\', '/', [rfReplaceAll]);
-  AResponseInfo.ContentType := GetMimeType(ExtractFileExt(FilePath));
-  stream := TFileStream.Create(FilePath, fmOpenRead or fmShareDenyNone);
-  try
-    AResponseInfo.ContentStream := stream;
-    AResponseInfo.FreeContentStream := true;
-  except
-    stream.Free;
-    raise;
+  Args.ArgsInterface.Set_Handled(1);
+end;
+
+procedure TForm2.File2Click(Sender: TObject);
+var
+  data: PAnsiChar;
+begin
+  data := DdeClientConv1.RequestData('DdeServerItem1');
+  if data = 'open'#13#10 then
+    EdgeBrowser1.Navigate(url)
+  else
+  begin
+    Panel1.Show;
+    Application.ProcessMessages;
+    if DdeClientConv1.OpenLink then
+      EdgeBrowser1.Navigate(url);
   end;
+  System.AnsiStrings.StrDispose(data);
+end;
+
+procedure TForm2.FormCreate(Sender: TObject);
+begin
+  url := 'http://localhost:5050/index.html';
+  DdeClientConv1.SetLink('ReaderServer', 'server');
+end;
+
+procedure TForm2.FormDestroy(Sender: TObject);
+begin
+  DeleteFile(ExtractFilePath(Application.ExeName) + 'bibi-bookshelf\temp.epub');
 end;
 
 procedure TForm2.N2Click(Sender: TObject);
@@ -127,9 +111,27 @@ begin
   Close;
 end;
 
+procedure TForm2.open1Click(Sender: TObject);
+var
+  data: PAnsiChar;
+begin
+  if FileOpenDialog1.Execute then
+  begin
+    data := DdeClientConv1.RequestData('DdeServerItem1');
+    if (data = 'open'#13#10) or DdeClientConv1.OpenLink then
+    begin
+      CopyFile(PChar(FileOpenDialog1.FileName),
+        PChar(ExtractFilePath(Application.ExeName) +
+        'bibi-bookshelf\temp.epub'), false);
+      EdgeBrowser1.Navigate(url + '?book=temp.epub');
+    end;
+    System.AnsiStrings.StrDispose(data);
+  end;
+end;
+
 procedure TForm2.Version1Click(Sender: TObject);
 begin
-  Showmessage('version 1.0.4');
+  Showmessage('version 1.1.0');
 end;
 
 end.

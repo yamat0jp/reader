@@ -9,7 +9,7 @@
         <Projects Include="reader.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="MDIAPP.dproj">
+        <Projects Include="ReaderServer.dproj">
             <Dependencies/>
         </Projects>
     </ItemGroup>
@@ -38,23 +38,23 @@
     <Target Name="reader:Make">
         <MSBuild Projects="reader.dproj" Targets="Make"/>
     </Target>
-    <Target Name="MDIAPP">
-        <MSBuild Projects="MDIAPP.dproj"/>
+    <Target Name="ReaderServer">
+        <MSBuild Projects="ReaderServer.dproj"/>
     </Target>
-    <Target Name="MDIAPP:Clean">
-        <MSBuild Projects="MDIAPP.dproj" Targets="Clean"/>
+    <Target Name="ReaderServer:Clean">
+        <MSBuild Projects="ReaderServer.dproj" Targets="Clean"/>
     </Target>
-    <Target Name="MDIAPP:Make">
-        <MSBuild Projects="MDIAPP.dproj" Targets="Make"/>
+    <Target Name="ReaderServer:Make">
+        <MSBuild Projects="ReaderServer.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="epub;reader;MDIAPP"/>
+        <CallTarget Targets="epub;reader;ReaderServer"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="epub:Clean;reader:Clean;MDIAPP:Clean"/>
+        <CallTarget Targets="epub:Clean;reader:Clean;ReaderServer:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="epub:Make;reader:Make;MDIAPP:Make"/>
+        <CallTarget Targets="epub:Make;reader:Make;ReaderServer:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

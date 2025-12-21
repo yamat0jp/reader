@@ -27,14 +27,26 @@ object Form2: TForm2
     UserDataFolder = '%LOCALAPPDATA%\bds.exe.WebView2'
     OnNewWindowRequested = EdgeBrowser1NewWindowRequested
   end
+  object Panel1: TPanel
+    Left = 224
+    Top = 208
+    Width = 185
+    Height = 41
+    Caption = #29694#22312'App'#12469#12540#12496#12540#12434#36215#21205#20013#12391#12377
+    TabOrder = 1
+  end
   object MainMenu1: TMainMenu
     Left = 272
     Top = 128
     object File1: TMenuItem
       Caption = 'File'
       object File2: TMenuItem
-        Caption = 'Start'
+        Caption = 'reset'
         OnClick = File2Click
+      end
+      object open1: TMenuItem
+        Caption = 'open'
+        OnClick = open1Click
       end
       object N1: TMenuItem
         Caption = '-'
@@ -52,12 +64,32 @@ object Form2: TForm2
       end
     end
   end
-  object IdHTTPServer1: TIdHTTPServer
-    Active = True
-    Bindings = <>
-    DefaultPort = 8765
-    OnCommandGet = IdHTTPServer1CommandGet
-    Left = 368
+  object FileOpenDialog1: TFileOpenDialog
+    DefaultExtension = '.epub'
+    FavoriteLinks = <>
+    FileTypes = <
+      item
+        DisplayName = 'EPUB FILES'
+        FileMask = '*.epub'
+      end
+      item
+        DisplayName = #12377#12409#12390#12398#12501#12449#12452#12523
+        FileMask = '*.*'
+      end>
+    Options = []
+    Left = 480
     Top = 128
+  end
+  object DdeClientConv1: TDdeClientConv
+    ServiceApplication = 'ReaderServer'
+    OnOpen = DdeClientConv1Open
+    Left = 480
+    Top = 232
+  end
+  object DdeClientItem1: TDdeClientItem
+    DdeConv = DdeClientConv1
+    OnChange = DdeClientItem1Change
+    Left = 360
+    Top = 304
   end
 end
