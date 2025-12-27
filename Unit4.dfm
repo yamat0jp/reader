@@ -3265,4 +3265,8 @@ object Form4: TForm4
     Left = 424
     Top = 104
   end
+  object LeftTop: TDdeServerItem
+    Left = 424
+    Top = 184
+  end
 end

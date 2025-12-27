@@ -17,6 +17,7 @@ type
     PopupMenu1: TPopupMenu;
     Reader1: TMenuItem;
     DdeServerItem1: TDdeServerItem;
+    LeftTop: TDdeServerItem;
     procedure FormCreate(Sender: TObject);
     procedure IdHTTPServer1CommandGet(AContext: TIdContext;
       ARequestInfo: TIdHTTPRequestInfo; AResponseInfo: TIdHTTPResponseInfo);
