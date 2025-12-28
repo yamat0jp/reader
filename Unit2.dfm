@@ -83,9 +83,13 @@ object Form2: TForm2
     Left = 360
     Top = 304
   end
-  object ApplicationEvents1: TApplicationEvents
-    OnMessage = ApplicationEvents1Message
-    Left = 104
-    Top = 136
+  object DropFileTarget1: TDropFileTarget
+    DragTypes = [dtCopy, dtLink]
+    OnDragOver = DropFileTarget1DragOver
+    OnDrop = DropFileTarget1Drop
+    Target = StatusBar1
+    OptimizedMove = True
+    Left = 416
+    Top = 96
   end
 end

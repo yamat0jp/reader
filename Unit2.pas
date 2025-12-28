@@ -8,9 +8,12 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Winapi.WebView2, Winapi.ActiveX,
   Vcl.Menus, Vcl.AppEvnts, Vcl.OleCtrls, SHDocVw, IdBaseComponent,
   IdComponent, IdCustomTCPServer, IdCustomHTTPServer, IdHTTPServer, IdContext,
-  Vcl.DdeMan, Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.Edge;
+  Vcl.DdeMan, Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.Edge, DragDrop, DropTarget,
+  DragDropGraphics, DragDropFile;
 
 type
+  TNaviMode = (nmOpen, nmTop, nmMove);
+
   TForm2 = class(TForm)
     MainMenu1: TMainMenu;
     File1: TMenuItem;
@@ -24,8 +27,8 @@ type
     Panel1: TPanel;
     StatusBar1: TStatusBar;
     DdeClientItem1: TDdeClientItem;
-    ApplicationEvents1: TApplicationEvents;
     EdgeBrowser1: TEdgeBrowser;
+    DropFileTarget1: TDropFileTarget;
     procedure File2Click(Sender: TObject);
     procedure N2Click(Sender: TObject);
     procedure Version1Click(Sender: TObject);
@@ -34,16 +37,22 @@ type
     procedure open1Click(Sender: TObject);
     procedure DdeClientConv1Open(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure ApplicationEvents1Message(var Msg: TMsg; var Handled: Boolean);
     procedure EdgeBrowser1NavigationCompleted(Sender: TCustomEdgeBrowser;
       IsSuccess: Boolean; WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
     procedure FormDestroy(Sender: TObject);
+    procedure EdgeBrowser1WebMessageReceived(Sender: TCustomEdgeBrowser;
+      Args: TWebMessageReceivedEventArgs);
+    procedure DropFileTarget1DragOver(Sender: TObject; ShiftState: TShiftState;
+      APoint: TPoint; var Effect: LongInt);
+    procedure DropFileTarget1Drop(Sender: TObject; ShiftState: TShiftState;
+      APoint: TPoint; var Effect: LongInt);
   private
     { Private 宣言 }
     name: string;
     procedure StartPosition;
     procedure Title(const FileName: string);
     function MakeURL(const FileName: string): string;
+    procedure LinkAndNavi(mode: TNaviMode);
   public
     { Public 宣言 }
   end;
@@ -56,41 +65,87 @@ implementation
 {$R *.dfm}
 
 uses Winapi.ShellAPI, System.Generics.Collections, System.IOUtils,
-  System.AnsiStrings, about, System.NetEncoding;
+  System.AnsiStrings, about, System.NetEncoding, System.JSON;
 
 const
   OPEN = 0;
   SILENT = 1;
   DISPLAY = 2;
+  NONE = 4;
 
   url = 'http://localhost:5050/index.html';
 
-procedure TForm2.ApplicationEvents1Message(var Msg: TMsg; var Handled: Boolean);
+procedure TForm2.LinkAndNavi(mode: TNaviMode);
 var
   s: string;
+  data: PAnsiChar;
 begin
-  if Msg.message = WM_DROPFILES then
-  begin
-    s := Msg.wParam.ToString;
-    Title(ExtractFileName(s));
-    name := MakeURL(s);
-    EdgeBrowser1.Tag := SILENT;
-    EdgeBrowser1.Navigate(url);
+  case mode of
+    nmOpen:
+      EdgeBrowser1.Tag := OPEN;
+    nmTop:
+      EdgeBrowser1.Tag := DISPLAY;
+    nmMove:
+      begin
+        EdgeBrowser1.Tag := SILENT;
+        s := ExtractFilePath(Application.ExeName) + 'bibi-bookshelf\temp.epub';
+        CopyFile(PChar(name), PChar(s), false);
+      end;
+  end;
+  data := DdeClientConv1.RequestData('DdeServerItem1');
+  try
+    if 'open'#13#10 = data then
+      DdeClientConv1Open(nil)
+    else
+    begin
+      Panel1.Show;
+      Application.ProcessMessages;
+      DdeClientConv1.SetLink('ReaderServer', 'server');
+    end;
+  finally
+    System.AnsiStrings.StrDispose(data);
   end;
 end;
 
 procedure TForm2.DdeClientConv1Open(Sender: TObject);
 begin
   Panel1.Hide;
-  if EdgeBrowser1.Tag = SILENT then
-    EdgeBrowser1.Navigate(url + '?book=/bibi-bookshelf/temp.epub')
-  else
-    EdgeBrowser1.Navigate(url);
+  case EdgeBrowser1.Tag of
+    SILENT:
+      begin
+        EdgeBrowser1.Tag := DISPLAY;
+        EdgeBrowser1.Navigate(url + '?book=/bibi-bookshelf/temp.epub');
+      end;
+    OPEN, DISPLAY:
+      EdgeBrowser1.Navigate(url);
+  end;
+end;
+
+procedure TForm2.DropFileTarget1DragOver(Sender: TObject;
+  ShiftState: TShiftState; APoint: TPoint; var Effect: LongInt);
+var
+  ext: string;
+begin
+  if DropFileTarget1.Files.Count > 0 then
+  begin
+    ext := ExtractFileExt(DropFileTarget1.Files[0]).ToLower;
+    if ext = '.epub' then
+      Effect := DROPEFFECT_NONE;
+  end;
+end;
+
+procedure TForm2.DropFileTarget1Drop(Sender: TObject; ShiftState: TShiftState;
+  APoint: TPoint; var Effect: LongInt);
+begin
+  if DropFileTarget1.Files.Count > 0 then
+    caption := ExtractFileName(DropFileTarget1.Files[0]);
 end;
 
 procedure TForm2.EdgeBrowser1NavigationCompleted(Sender: TCustomEdgeBrowser;
   IsSuccess: Boolean; WebErrorStatus: COREWEBVIEW2_WEB_ERROR_STATUS);
 begin
+  if not EdgeBrowser1.WebMessageEnabled then
+    EdgeBrowser1.WebMessageEnabled := true;
   if IsSuccess then
     case Sender.Tag of
       OPEN:
@@ -100,10 +155,7 @@ begin
           Title('??? ???');
         end;
       SILENT:
-        begin
-          Sender.Tag := DISPLAY;
-          Sender.Navigate(name);
-        end;
+        EdgeBrowser1.Navigate(name);
     end;
 end;
 
@@ -114,52 +166,62 @@ begin
   Args.ArgsInterface.Set_NewWindow(Sender.DefaultInterface);
 end;
 
-procedure TForm2.File2Click(Sender: TObject);
+procedure TForm2.EdgeBrowser1WebMessageReceived(Sender: TCustomEdgeBrowser;
+  Args: TWebMessageReceivedEventArgs);
 var
-  data: PAnsiChar;
+  JSON, FileName: string;
+  LJSONObject: TJSONObject;
 begin
-  EdgeBrowser1.Tag := DISPLAY;
-  data := DdeClientConv1.RequestData('DdeServerItem1');
-  if data = 'open'#13#10 then
-    EdgeBrowser1.Navigate(url)
-  else
-  begin
-    Panel1.Show;
-    Application.ProcessMessages;
-    DdeClientConv1.OpenLink;
+  // JSON := Args;
+  LJSONObject := TJSONObject.ParseJSONValue(JSON) as TJSONObject;
+  try
+    if LJSONObject.GetValue('type').Value = 'BookLoaded' then
+    begin
+      FileName := LJSONObject.GetValue('filename').Value;
+      ShowMessage('EPUB ファイル名: ' + FileName);
+      // ここで保存・処理など自由に
+    end;
+  finally
+    LJSONObject.Free;
   end;
-  System.AnsiStrings.StrDispose(data);
+end;
+
+procedure TForm2.File2Click(Sender: TObject);
+begin
+  LinkAndNavi(nmTop);
   Title('no title');
 end;
 
 procedure TForm2.FormCreate(Sender: TObject);
 var
   data: PAnsiChar;
-  s: string;
+  mode: TNaviMode;
 begin
-  EdgeBrowser1.Tag := DISPLAY;
   if ParamStr(1) = '' then
   begin
     name := '';
+    mode := nmTop;
     Title('no title');
   end
   else
   begin
-    s := ExtractFilePath(Application.ExeName) + 'bibi-bookshelf\temp.epub';
-    CopyFile(PChar(ParamStr(1)), PChar(s), false);
-    EdgeBrowser1.Tag := SILENT;
+    mode := nmMove;
+    name := ParamStr(1);
     Title(ExtractFileName(ParamStr(1)));
   end;
-  DdeClientConv1.SetLink('ReaderServer', 'server');
+  LinkAndNavi(mode);
   data := DdeClientConv1.RequestData('LeftTop');
-  if data <> '' then
-  begin
+  try
     DdeClientItem1.Lines.Text := String(data);
+  finally
+    System.AnsiStrings.StrDispose(data);
+  end;
+  if DdeClientItem1.Lines.Count > 0 then
+  begin
     Left := DdeClientItem1.Lines.Values['Left'].ToInteger;
     Top := DdeClientItem1.Lines.Values['Top'].ToInteger;
     DdeClientItem1.Lines.Clear;
   end;
-  System.AnsiStrings.StrDispose(data);
   StartPosition;
 end;
 
@@ -184,8 +246,7 @@ end;
 
 procedure TForm2.open1Click(Sender: TObject);
 begin
-  EdgeBrowser1.Tag := OPEN;
-  EdgeBrowser1.Navigate(url);
+  LinkAndNavi(nmOpen);
 end;
 
 procedure TForm2.StartPosition;
@@ -209,7 +270,7 @@ end;
 
 procedure TForm2.Title(const FileName: string);
 begin
-  Caption := '[epub reader] -- ' + FileName;
+  caption := '[epub reader] -- ' + FileName;
 end;
 
 procedure TForm2.Version1Click(Sender: TObject);
