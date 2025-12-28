@@ -130,7 +130,7 @@ begin
   begin
     ext := ExtractFileExt(DropFileTarget1.Files[0]).ToLower;
     if ext = '.epub' then
-      Effect := DROPEFFECT_NONE;
+      Effect := DROPEFFECT_MOVE;
   end;
 end;
 
