@@ -22,11 +22,17 @@ Zipファイルを解凍してできたフォルダごとインストールフ�
 
 [作者連絡先]
 
-URL:https://sites.google.com/site/delphiuserhotkey/ BBS：http://terukohietori.nrt.buttobi.net/
+URL:https://sites.google.com/site/delphiuserhotkey/ 
+BBS：http://terukohietori.nrt.buttobi.net/
 
 
 
 [バージョン情報]
+
+version 1.2.1
+
+安定板。内部記述に変更を加えてタイミングを慎重に考慮した。
+
 
 version 1.2.0
 

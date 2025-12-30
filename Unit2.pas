@@ -163,7 +163,9 @@ procedure TForm2.EdgeBrowser1NewWindowRequested(Sender: TCustomEdgeBrowser;
   Args: TNewWindowRequestedEventArgs);
 begin
   Args.ArgsInterface.Set_Handled(1);
-  Args.ArgsInterface.Set_NewWindow(Sender.DefaultInterface);
+  Sender.Tag:=SILENT;
+  DdeClientConv1Open(nil);
+//  Args.ArgsInterface.Set_NewWindow(Sender.DefaultInterface);
 end;
 
 procedure TForm2.EdgeBrowser1WebMessageReceived(Sender: TCustomEdgeBrowser;

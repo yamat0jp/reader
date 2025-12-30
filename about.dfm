@@ -49673,7 +49673,7 @@ object AboutBox: TAboutBox
       Margins.Top = 2
       Margins.Right = 2
       Margins.Bottom = 2
-      Caption = #12496#12540#12472#12519#12531' :  1.3.0'
+      Caption = #12496#12540#12472#12519#12531' :  1.2.1'
       IsControl = True
     end
     object Copyright: TLabel
